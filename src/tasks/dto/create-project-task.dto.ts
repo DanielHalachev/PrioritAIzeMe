@@ -1,7 +1,7 @@
-import { IsBoolean, isBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString } from "class-validator";
 import { Priority } from "../entities/priority.enum";
+import { IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString } from "class-validator";
 
-export class CreateTaskDto {
+export class CreateProjectTaskDto {
     @IsString()
     public readonly title: string;
     @IsString()
