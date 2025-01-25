@@ -1,9 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, ManyToMany, JoinTable, OneToOne, JoinColumn, getRepository, BeforeInsert, BeforeUpdate } from 'typeorm'
+import { Column, PrimaryGeneratedColumn, ManyToOne, ManyToMany, JoinTable, BeforeInsert, BeforeUpdate } from 'typeorm'
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
-
-enum Priority { Low, Medium, High };
-
+import { Priority } from './priority.enum';
 export class Task {
     @PrimaryGeneratedColumn()
     id: number;
@@ -15,6 +13,9 @@ export class Task {
     description: string;
 
     @Column()
+    dueDate: Date;
+
+    @Column()
     completed: boolean;
 
     @Column()
@@ -23,7 +24,7 @@ export class Task {
     @Column()
     normalizedSentiment: number;
 
-    @Column({ type: 'enum', enum: Priority, default: null })
+    @Column({ type: 'enum', enum: Priority, default: Priority.NONE })
     priority: Priority;
 
     @ManyToMany(() => User, user => user.tasks)
@@ -43,11 +44,11 @@ export class Task {
 
     private getPriorityBasedOnSentiment(sentiment: number): Priority {
         if (sentiment < -0.2) {
-            return Priority.High;
+            return Priority.HIGH;
         }
         if (sentiment < 0.2) {
-            return Priority.Medium;
+            return Priority.MEDIUM;
         }
-        return Priority.Low;
+        return Priority.LOW;
     }
 }

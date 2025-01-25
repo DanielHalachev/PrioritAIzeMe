@@ -7,7 +7,7 @@ export class Project {
     id: number;
 
     @Column()
-    title: string;
+    name: string;
 
     @ManyToMany(() => User, user => user.projects)
     @JoinTable()
