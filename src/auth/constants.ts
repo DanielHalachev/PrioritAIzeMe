@@ -1,12 +1,14 @@
 import { SetMetadata } from '@nestjs/common';
+import e from 'express';
 
 export const jwtConstants = {
-    // TODO fetch from system, do not put key in source code
-    secret: 'Bla Bla',
+    secret: process.env.JWT_SECRET,
 }
+
+export const saltOrRounds = 10;
 
 // these two allow us to define 
 // a SkipPublic() decorator, which skips
 // the authorization requirement for an endpoint
 export const IS_PUBLIC_KEY = 'isPublic';
-export const SkipPublic = () => SetMetadata(IS_PUBLIC_KEY, true);
+export const SkipAuth = () => SetMetadata(IS_PUBLIC_KEY, true);

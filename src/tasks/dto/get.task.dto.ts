@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsIn, IsInt, Min, IsPositive, IsBoolean, IsEnum, IsDate, IsObject, Matches } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsInt, Min, IsPositive, IsBoolean, IsEnum, IsDate, IsObject, Matches, IsNumber, IsNumberString, IsDecimal } from 'class-validator';
 import { Priority } from '@prisma/client';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -45,9 +45,20 @@ export class GetTaskDto {
     @IsDate()
     dueDate?: Date;
 
+    @ApiPropertyOptional({ format: 'float' })
+    @IsOptional()
+    @IsDecimal()
+    sentiment?: number;
+
+    @ApiPropertyOptional({ format: 'float' })
+    @IsOptional()
+    @IsDecimal()
+    normalizedSentiment?: number;
+
     @ApiPropertyOptional({ description: 'Order by fields in the format <[+-]><field>,...', example: '+id,-description' })
     @IsOptional()
-    @Matches(/^([+-]\w+)?(,[+-]\w+)*$/, { message: 'Invalid orderBy format' })
+    @IsString()
+    // @Matches(/^([+-]\w+)(,[+-]\w+)*$/, { message: 'Invalid orderBy format' })
     orderBy?: string;
 
     @ApiPropertyOptional({ format: 'int32', minimum: 0 })

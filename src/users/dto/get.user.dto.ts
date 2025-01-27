@@ -1,12 +1,17 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Prisma } from "@prisma/client";
-import { IsBoolean, IsInt, IsOptional, IsString, Matches, Min } from "class-validator";
+import { Prisma, UserRole } from "@prisma/client";
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from "class-validator";
 
 export class GetUserQueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
     email?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    username?: string;
 
     @ApiPropertyOptional()
     @IsOptional()
@@ -18,14 +23,14 @@ export class GetUserQueryDto {
     @IsString()
     lastName?: string;
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ enum: UserRole })
     @IsOptional()
-    @IsBoolean()
-    isAdmin?: boolean;
+    @IsEnum(UserRole)
+    role?: UserRole;
 
     @ApiPropertyOptional({ description: 'Order by fields in the format <[+-]><field>,...', example: '+id,-description' })
     @IsOptional()
-    @Matches(/^([+-]\w+)?(,[+-]\w+)*$/, { message: 'Invalid orderBy format' })
+    // @Matches(/^([+-]\w+)?(,[+-]\w+)*$/, { message: 'Invalid orderBy format' })
     orderBy?: string;
 
     @ApiPropertyOptional({ format: 'int32', minimum: 0 })

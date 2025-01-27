@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Project } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from './../prisma/prisma.service';
 
 @Injectable()
 export class ProjectsService {
@@ -29,9 +29,16 @@ export class ProjectsService {
     });
   }
 
-  async findOne(projectWhereUniqueInput: Prisma.ProjectWhereUniqueInput): Promise<Project | null> {
+  async findOne(projectWhereUniqueInput: Prisma.ProjectWhereUniqueInput) {
     return this.prisma.project.findUnique({
-      where: projectWhereUniqueInput
+      where: projectWhereUniqueInput,
+      include: {
+        ProjectParticipants: {
+          select: {
+            userId: true, // Only select the userId field
+          },
+        },
+      }
     });
   }
 

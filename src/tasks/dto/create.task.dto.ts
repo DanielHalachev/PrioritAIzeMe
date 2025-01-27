@@ -22,8 +22,8 @@ export class CreateTaskDto {
     @IsBoolean()
     completed?: boolean = false;
 
-    @ApiPropertyOptional({ enum: Priority, default: Priority.NONE })
+    @ApiPropertyOptional({ enum: Priority, default: Priority.AUTO })
     @IsOptional()
     @IsEnum(Priority)
-    priority?: Priority;
+    priority?: Priority = Priority.AUTO;
 }

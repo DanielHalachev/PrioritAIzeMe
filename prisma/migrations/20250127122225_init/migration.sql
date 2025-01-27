@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Task` MODIFY `priority` ENUM('NONE', 'AUTO', 'LOW', 'MEDIUM', 'HIGH') NOT NULL DEFAULT 'AUTO';

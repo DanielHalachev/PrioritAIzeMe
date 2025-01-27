@@ -1,4 +1,4 @@
-function parseOrderBy(orderBy?: string): Record<string, 'asc' | 'desc'> {
+export function parseOrderBy(orderBy?: string): Record<string, 'asc' | 'desc'> {
     if (orderBy === undefined || orderBy === null || orderBy === '') {
         return {};
     }
