@@ -4,22 +4,13 @@ import { AppService } from './app.service';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
-import {TypeOrmModule} from '@nestjs/typeorm';
-import { User } from './users/entities/user.entity';
 import { SentimentService } from './sentiment/sentiment.service';
+import { AuthModule } from './auth/auth.module';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
-  imports: [TasksModule, UsersModule, ProjectsModule, TypeOrmModule.forRoot({
-    type: `mysql`,
-    host: 'localhost',
-    port: 3306,
-    username: 'root',
-    password: 'root',
-    database: 'analyze',
-    entities: [User],
-    synchronize: true, // TODO do not use in production
-  })],
+  imports: [TasksModule, UsersModule, ProjectsModule, AuthModule],
   controllers: [AppController],
-  providers: [AppService, SentimentService],
+  providers: [AppService, SentimentService, PrismaService],
 })
-export class AppModule {}
+export class AppModule { }
