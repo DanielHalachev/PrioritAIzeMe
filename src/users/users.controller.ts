@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Prisma, User, UserRole } from '@prisma/client';
-import { ReqUser } from 'src/decorators/user.decorator';
+import { ReqUser } from './../decorators/user.decorator';
 import { GetUserQueryDto as GetUserDto } from './dto/get.user.dto';
 import { CreateUserDto } from './dto/create.user.dto';
-import { saltOrRounds, SkipAuth } from 'src/auth/constants';
+import { saltOrRounds, SkipAuth } from './../auth/constants';
 import * as bcrypt from 'bcrypt';
-import { parseOrderBy } from 'src/order.parser';
+import { SortingParams } from './../decorators/sorting.params.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -27,11 +27,19 @@ export class UsersController {
   }
 
   @Get()
-  async findAll(@ReqUser() user, @Query() params: GetUserDto): Promise<User[]> {
+  async findAll(
+    @ReqUser() user,
+    @Query() params: GetUserDto,
+    @SortingParams([
+      'username',
+      'email',
+      'firstName',
+      'lastName'
+    ]) orderBy): Promise<User[]> {
     if (user.role != UserRole.ADMIN) {
       throw new ForbiddenException();
     }
-    const sortingCriteria = parseOrderBy(params.orderBy);
+    const orderByArray = orderBy.map(order => ({ [order.property]: order.direction }));
     return this.usersService.findAll({
       where: {
         username: params.username,
@@ -40,12 +48,7 @@ export class UsersController {
         lastName: params.lastName,
         role: params.role,
       },
-      orderBy: {
-        username: sortingCriteria.username,
-        email: sortingCriteria.email,
-        firstName: sortingCriteria.firstName,
-        lastName: sortingCriteria.lastName,
-      },
+      orderBy: orderByArray.length ? orderByArray : { priority: 'desc' },
       take: params.take,
       skip: params.skip,
     });

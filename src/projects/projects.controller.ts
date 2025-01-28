@@ -1,11 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { Prisma, UserRole } from '@prisma/client';
-import { ReqUser } from 'src/decorators/user.decorator';
+import { ReqUser } from './../decorators/user.decorator';
 import { CreateProjectDto } from './dto/create.project.dto';
 import { GetProjectDto as GetProjectDto } from './dto/get.project.dto';
-import { parseOrderBy } from 'src/order.parser';
-import { userInfo } from 'os';
+import { SortingParams } from './../decorators/sorting.params.decorator';
 
 @Controller('projects')
 export class ProjectsController {
@@ -20,21 +19,27 @@ export class ProjectsController {
   }
 
   @Get()
-  async findAll(@ReqUser() user, @Query() params: GetProjectDto) {
-    const sortingCriteria = parseOrderBy(params.orderBy);
+  async findAll(
+    @ReqUser() user,
+    @Query() params: GetProjectDto,
+    @SortingParams([
+      'name',
+      'description'
+    ]) orderBy) {
+    const orderByArray = orderBy.map(order => ({ [order.property]: order.direction }));
+    const whereClause: Prisma.ProjectWhereInput = {
+      name: { contains: params.name },
+      description: { contains: params.description }
+    };
+    if (user.role !== UserRole.ADMIN) {
+      whereClause.OR = [
+        { ownerId: user.sub },
+        { ProjectParticipants: { some: { userId: user.sub } } }
+      ];
+    }
     return this.projectsService.findAll({
-      where: {
-        name: { contains: params.name },
-        description: { contains: params.description },
-        OR: [{
-          ownerId: user.role == UserRole.ADMIN ? undefined : user.sub,
-          ProjectParticipants: { some: user.sub }
-        }]
-      },
-      orderBy: {
-        name: sortingCriteria.name,
-        description: sortingCriteria.description
-      },
+      where: whereClause,
+      orderBy: orderByArray.length ? orderByArray : { name: 'asc' },
       skip: params.skip,
       take: params.take,
     });
@@ -46,7 +51,7 @@ export class ProjectsController {
     if (project == null) {
       throw new NotFoundException();
     }
-    if (project.ownerId != user.sub || project.ProjectParticipants.find(participant => participant.userId == user.sub) == null) {
+    if (project.ownerId != user.sub && project.ProjectParticipants.find(participant => participant.userId == user.sub) == null) {
       throw new ForbiddenException();
     }
     return this.projectsService.findOne({ id: id });

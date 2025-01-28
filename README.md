@@ -1,25 +1,31 @@
 # PrioritAIzeMe
 An intelligent task manager that allows users to create, read, update, and delete tasks, while using AI to prioritize them based on their sentiment.
 
-## Note
-I started working on the project on Friday, 25.12.2025. ***The current task requirements differ from the original task requirements, which I first received.*** For example:
+## Note on Task Requirements
 
-Original requirements:
-![Original Requirements](image.png)
-Current requirements:
-![New Requirements](image-1.png)
+I began working on this project on Friday, 24.01.2025. ***It is important to note that the task requirements have been changed since I started development.*** For example:
 
-I would like to point out that the original requirements, based on which I developed the project, made the task more difficult for me, because I was required to work with a tech stack, that I wasn't familiar with. In fact, the only familiar technologies from the original requirements were SQLite and PostgreSQL, as I am coming from a predominantly C++ and Java background. 
+- **Original Requirements:**  
+  ![Original Requirements](original%20requirements.png)
 
-Nevertheless, I managed to produce an efficient solution, satisfying both the original and the updated requirements, as well as providing additional features. 
+- **Current Requirements:**  
+  ![New Requirements](current%20requirements.png)
+
+The original requirements, which I followed during development, presented additional challenges as they required the use of a technology stack unfamiliar to me. Among the original requirements, the only technologies I had prior experience with were SQLite and PostgreSQL, as my background is predominantly in C++ and Java.
+
+Despite these challenges, I successfully developed a solution that meets the original requirements, aligns with the updated requirements, and also includes additional features for enhanced functionality.
 
 ## Features
 ### Tech Stack
-This project was built using Nest.JS over Fastify (unlike the default Express.js base) to maximize performance and facilitate easy project maintenance. 
+This project was built using `NestJS` over `Fastify` (unlike the default Express.js base) to maximize performance and facilitate easy project maintenance. `Prisma` is used as an ORM. 
 
-The REST API is documented and type-enforced using `Swagger` and `class-validator`. For complete API documentation, refer to `swagger.html` or `localhost:3000/api` (when running the project).
+The tasks' sentiment is evaluated using the `sentiment` Javascript library. 
 
-The REST API has been tested for consistency in `Postman`. 
+The REST API is documented and type-enforced using `Swagger` and `class-validator`. For complete API documentation, refer to [Swagger.html](Swagger.html), [api-json.json](api-json.json) or `localhost:3000/api` (when running the project).
+
+The REST API has been reviewed for consistency in `Postman`. 
+
+For checking the AI prompts that helped me, refer to [ai_prompts.md](ai_prompts.md).
 ### Resources
 The REST API implements endpoints for `users` and `tasks`. In addition, `project` entities have been added, which allow grouping tasks together. Tasks can either be standalone or part of a project. 
 
@@ -67,7 +73,7 @@ The SQL schema closely follows the conceptional object `Prisma` models above, bu
 ## Setup Instructions
 1. Clone the project
 2. Install dependencies using `npm install`
-3. Set database credentials in a `.env` file
+3. Set database and JWT variables (`DATABASE_URL` and `JWT_SECRET`) in a `.env` file
 4. Populate the database with sample data: `prisma db seed` (optional)
 5. Run using `npm run start`
 6. Create a user and login or login using an existing user's credentials
@@ -77,10 +83,11 @@ The SQL schema closely follows the conceptional object `Prisma` models above, bu
 - `sentiment` works for English by default. Sentiment analysis could be improved for other languages:
   - by first running a model, which determines the language description and then running `sentiment` for the discovered language
   - by using a neural model, which is language-agnostic. This would increase third-party dependencies and that's why I avoided this option.  
-- `OpenID Connect` Authentication and Authorization - offers standardized and superior security to regular `JWT`s, as well as third-party integration by means of: 
+- a complete task prioritization algorithm could be developed. A Naive Bayes Classifier, Decision Tree or Neural Network are suitable choices. They could be trained on accumulated historical user data (manual prioritization user choices).
+- `OpenID Connect` Authentication and Authorization - offers standardized and superior security to regular `JWT`s, as well as third-party integration (with Google, Todoist, etc.) by means of: 
   - ID Token
   - Access Token
   - Refresh Token
-- more detailed API documentation (more Swagger annotations)
-- more rigorous testing
+- even more detailed API documentation (more Swagger annotations)
+- even more rigorous testing
 

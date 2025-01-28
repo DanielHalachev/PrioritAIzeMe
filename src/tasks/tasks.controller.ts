@@ -3,8 +3,8 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create.task.dto';
 import { ReqUser } from '../decorators/user.decorator';
 import { GetTaskDto as GetTaskDto } from './dto/get.task.dto';
-import { Priority, Prisma, Task, UserRole } from '@prisma/client';
-import { parseOrderBy } from './../order.parser';
+import { Prisma, Task, UserRole } from '@prisma/client';
+import { SortingParams } from './../decorators/sorting.params.decorator';
 
 
 @Controller('tasks')
@@ -24,8 +24,19 @@ export class TasksController {
   }
 
   @Get()
-  async findAll(@ReqUser() user, @Query() params: GetTaskDto): Promise<Task[]> {
-    const sortingCriteria = parseOrderBy(params.orderBy);
+  async findAll(
+    @ReqUser() user,
+    @Query() params: GetTaskDto,
+    @SortingParams([
+      'title',
+      'description',
+      'created',
+      'dueDate',
+      'completed',
+      'priority',
+      'sentiment',
+      'normalizedSentiment'
+    ]) orderBy): Promise<Task[]> {
     const whereClause: Prisma.TaskWhereInput = {
       title: params.title ? { contains: params.title } : undefined,
       description: params.description ? { contains: params.description } : undefined,
@@ -43,19 +54,11 @@ export class TasksController {
         { TaskAssignees: { some: { userId: user.sub } } }
       ];
     }
+    const orderByArray = orderBy.map(order => ({ [order.property]: order.direction }));
     return this.tasksService.findAll(
       {
         where: whereClause,
-        orderBy: {
-          title: sortingCriteria.title,
-          description: sortingCriteria.description,
-          created: sortingCriteria.created,
-          dueDate: sortingCriteria.dueDate,
-          completed: sortingCriteria.completed,
-          priority: sortingCriteria.priority,
-          sentiment: sortingCriteria.sentiment,
-          normalizedSentiment: sortingCriteria.normalizedSentiment,
-        },
+        orderBy: orderByArray.length ? orderByArray : { priority: 'desc' },
         skip: params.skip,
         take: params.take,
       }
@@ -68,7 +71,7 @@ export class TasksController {
     if (task == null) {
       throw new NotFoundException();
     }
-    if (task.creatorId != user.sub || task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
+    if (task.creatorId != user.sub && task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
       throw new ForbiddenException();
     }
     return this.tasksService.findOne({ id: id, creatorId: user.sub });
@@ -95,7 +98,7 @@ export class TasksController {
     if (task == null) {
       throw new NotFoundException();
     }
-    if (task.creatorId != user.sub || task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
+    if (task.creatorId != user.sub && task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
       throw new ForbiddenException();
     }
     return this.tasksService.update({
@@ -111,9 +114,11 @@ export class TasksController {
       throw new NotFoundException();
     }
     if (task.creatorId != user.sub) {
+      console.log(task.creatorId, user.sub)
       throw new ForbiddenException();
     }
-    return this.tasksService.assign(taskId, assigneeId);
+    await this.tasksService.assign(taskId, assigneeId);
+    return this.tasksService.findOne({ id: taskId });
   }
 
   @Patch(':taskId/unassign')
@@ -125,7 +130,8 @@ export class TasksController {
     if (task.creatorId != user.sub) {
       throw new ForbiddenException();
     }
-    return this.tasksService.unAssign(taskId, assigneeId);
+    await this.tasksService.unAssign(taskId, assigneeId);
+    return this.tasksService.findOne({ id: taskId });
   }
 
   @Delete(':id')
