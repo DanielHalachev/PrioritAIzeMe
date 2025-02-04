@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { ProjectsService } from './projects.service';
+import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Body, Controller, Delete, ForbiddenException, Get, NotFoundException, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common';
 import { Prisma, UserRole } from '@prisma/client';
+import { SortingParams } from './../decorators/sorting.params.decorator';
 import { ReqUser } from './../decorators/user.decorator';
 import { CreateProjectDto } from './dto/create.project.dto';
-import { GetProjectDto as GetProjectDto } from './dto/get.project.dto';
-import { SortingParams } from './../decorators/sorting.params.decorator';
+import { GetProjectDto } from './dto/get.project.dto';
+import { ProjectsService } from './projects.service';
 
 @Controller('projects')
+@UseInterceptors(CacheInterceptor)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) { }
 

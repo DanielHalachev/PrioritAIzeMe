@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Body, Controller, Delete, ForbiddenException, Get, NotFoundException, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common';
 import { Prisma, User, UserRole } from '@prisma/client';
-import { ReqUser } from './../decorators/user.decorator';
-import { GetUserQueryDto as GetUserDto } from './dto/get.user.dto';
-import { CreateUserDto } from './dto/create.user.dto';
-import { saltOrRounds, SkipAuth } from './../auth/constants';
 import * as bcrypt from 'bcrypt';
+import { saltOrRounds, SkipAuth } from './../auth/constants';
 import { SortingParams } from './../decorators/sorting.params.decorator';
+import { ReqUser } from './../decorators/user.decorator';
+import { CreateUserDto } from './dto/create.user.dto';
+import { GetUserQueryDto as GetUserDto } from './dto/get.user.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
+@UseInterceptors(CacheInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 

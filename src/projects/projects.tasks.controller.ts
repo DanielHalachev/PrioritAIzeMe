@@ -1,11 +1,11 @@
-import { TasksService } from './../tasks/tasks.service';
+import { Body, Controller, Delete, ForbiddenException, Get, NotFoundException, Param, Patch, Post, Query } from '@nestjs/common';
+import { Prisma, Task, UserRole } from '@prisma/client';
+import { SortingParams } from './../decorators/sorting.params.decorator';
 import { ReqUser } from './../decorators/user.decorator';
 import { CreateTaskDto } from './../tasks/dto/create.task.dto';
 import { GetTaskDto } from './../tasks/dto/get.task.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { Prisma, Task, UserRole } from '@prisma/client';
+import { TasksService } from './../tasks/tasks.service';
 import { ProjectsService } from './projects.service';
-import { SortingParams } from './../decorators/sorting.params.decorator';
 
 
 @Controller('projects/:projectId/tasks')
@@ -87,21 +87,7 @@ export class ProjectTasksController {
         @ReqUser() user,
         @Param('projectId') projectId: number,
         @Param('id') id: number) {
-        const project = await this.projectService.findOne({ id: projectId });
-        if (project == null) {
-            throw new NotFoundException();
-        }
-        if (!project?.ProjectParticipants.some(participant => participant.userId === user.sub) && project?.ownerId != user.sub && user.role != UserRole.ADMIN) {
-            throw new ForbiddenException();
-        }
-        const task = await this.tasksService.findOne({ id: id });
-        if (task == null) {
-            throw new NotFoundException();
-        }
-        if (task.creatorId != user.sub && task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
-            throw new ForbiddenException();
-        }
-        return this.tasksService.findOne({ id: id, creatorId: user.sub });
+        return this.tasksService.findOne(user.sub, id, { id: id, creatorId: user.sub });
     }
 
     @Patch(':id')
@@ -117,14 +103,7 @@ export class ProjectTasksController {
         if (project.ownerId != user.sub && user.role != UserRole.ADMIN) {
             throw new ForbiddenException();
         }
-        const task = await this.tasksService.findOne({ id: id });
-        if (task == null) {
-            throw new NotFoundException();
-        }
-        if (task.creatorId != user.sub) {
-            throw new ForbiddenException();
-        }
-        return this.tasksService.update({
+        return this.tasksService.update(user.sub, id, {
             data: updateTaskDto,
             where: { id: id, creatorId: user.sub }
         });
@@ -135,15 +114,7 @@ export class ProjectTasksController {
         @ReqUser() user,
         @Param('projectId') projectId: number,
         @Param('id') id: number): Promise<Task> {
-        const task = await this.tasksService.findOne({ id: id });
-
-        if (task == null) {
-            throw new NotFoundException();
-        }
-        if (task.creatorId != user.sub && task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
-            throw new ForbiddenException();
-        }
-        return this.tasksService.update({
+        return this.tasksService.update(user.sub, id, {
             data: { completed: true },
             where: { id: id, creatorId: user.sub }
         });
@@ -154,40 +125,17 @@ export class ProjectTasksController {
         @ReqUser() user,
         @Param('taskId') taskId: number,
         @Body('assigneeId') assigneeId: number) {
-        const task = await this.tasksService.findOne({ id: taskId });
-        if (task == null) {
-            throw new NotFoundException();
-        }
-        if (task.creatorId != user.sub) {
-            throw new ForbiddenException();
-        }
-        await this.tasksService.assign(taskId, assigneeId);
-        return this.tasksService.findOne({ id: taskId });
+        return this.tasksService.assign(user.sub, taskId, assigneeId);
     }
 
     @Patch(':taskId/unassign')
     async unAssign(@ReqUser() user, @Param('taskId') taskId: number, @Body('assigneeId') assigneeId: number) {
-        const task = await this.tasksService.findOne({ id: Number(taskId) });
-        if (task == null) {
-            throw new NotFoundException();
-        }
-        if (task.creatorId != user.sub) {
-            throw new ForbiddenException();
-        }
-        await this.tasksService.unAssign(taskId, assigneeId);
-        return this.tasksService.findOne({ id: taskId });
+        return this.tasksService.unAssign(user.sub, taskId, assigneeId);
     }
 
     @Delete(':id')
     async remove(@ReqUser() user, @Param('id') id: number): Promise<Task> {
-        const task = await this.tasksService.findOne({ id: id });
-        if (task == null) {
-            throw new NotFoundException();
-        }
-        if (task.creatorId != user.sub) {
-            throw new ForbiddenException();
-        }
-        return this.tasksService.remove({ id: id, creatorId: user.sub });
+        return this.tasksService.remove(user.sub, id, { id: id, creatorId: user.sub });
     }
 }
 

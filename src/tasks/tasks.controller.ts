@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { TasksService } from './tasks.service';
-import { CreateTaskDto } from './dto/create.task.dto';
-import { ReqUser } from '../decorators/user.decorator';
-import { GetTaskDto as GetTaskDto } from './dto/get.task.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common';
 import { Prisma, Task, UserRole } from '@prisma/client';
+import { ReqUser } from '../decorators/user.decorator';
 import { SortingParams } from './../decorators/sorting.params.decorator';
+import { CreateTaskDto } from './dto/create.task.dto';
+import { GetTaskDto } from './dto/get.task.dto';
+import { TasksService } from './tasks.service';
 
 
 @Controller('tasks')
+@UseInterceptors(CacheInterceptor)
 export class TasksController {
   constructor(private readonly tasksService: TasksService) { }
 
@@ -67,26 +69,12 @@ export class TasksController {
 
   @Get(':id')
   async findOne(@ReqUser() user, @Param('id') id: number) {
-    const task = await this.tasksService.findOne({ id: id });
-    if (task == null) {
-      throw new NotFoundException();
-    }
-    if (task.creatorId != user.sub && task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
-      throw new ForbiddenException();
-    }
-    return this.tasksService.findOne({ id: id, creatorId: user.sub });
+    return this.tasksService.findOne(user.sub, id, { id: id, creatorId: user.sub });
   }
 
   @Patch(':id')
   async update(@ReqUser() user, @Param('id') id: number, @Body() updateTaskDto: Prisma.TaskUpdateInput): Promise<Task> {
-    const task = await this.tasksService.findOne({ id: id });
-    if (task == null) {
-      throw new NotFoundException();
-    }
-    if (task.creatorId != user.sub) {
-      throw new ForbiddenException();
-    }
-    return this.tasksService.update({
+    return this.tasksService.update(user.sub, id, {
       data: updateTaskDto,
       where: { id: id, creatorId: user.sub }
     });
@@ -94,14 +82,7 @@ export class TasksController {
 
   @Patch(':id/complete')
   async complete(@ReqUser() user, @Param('id') id: number): Promise<Task> {
-    const task = await this.tasksService.findOne({ id: id });
-    if (task == null) {
-      throw new NotFoundException();
-    }
-    if (task.creatorId != user.sub && task.TaskAssignees.find(assignee => assignee.userId == user.sub) == null) {
-      throw new ForbiddenException();
-    }
-    return this.tasksService.update({
+    return this.tasksService.update(user.sub, id, {
       data: { completed: true },
       where: { id: id, creatorId: user.sub }
     });
@@ -109,40 +90,16 @@ export class TasksController {
 
   @Patch(':taskId/assign')
   async assign(@ReqUser() user, @Param('taskId') taskId: number, @Body('assigneeId') assigneeId: number) {
-    const task = await this.tasksService.findOne({ id: taskId });
-    if (task == null) {
-      throw new NotFoundException();
-    }
-    if (task.creatorId != user.sub) {
-      console.log(task.creatorId, user.sub)
-      throw new ForbiddenException();
-    }
-    await this.tasksService.assign(taskId, assigneeId);
-    return this.tasksService.findOne({ id: taskId });
+    return this.tasksService.assign(user.sub, taskId, assigneeId);
   }
 
   @Patch(':taskId/unassign')
   async unAssign(@ReqUser() user, @Param('taskId') taskId: number, @Body('assigneeId') assigneeId: number) {
-    const task = await this.tasksService.findOne({ id: Number(taskId) });
-    if (task == null) {
-      throw new NotFoundException();
-    }
-    if (task.creatorId != user.sub) {
-      throw new ForbiddenException();
-    }
-    await this.tasksService.unAssign(taskId, assigneeId);
-    return this.tasksService.findOne({ id: taskId });
+    return this.tasksService.unAssign(user.sub, taskId, assigneeId);
   }
 
   @Delete(':id')
   async remove(@ReqUser() user, @Param('id') id: number): Promise<Task> {
-    const task = await this.tasksService.findOne({ id: id });
-    if (task == null) {
-      throw new NotFoundException();
-    }
-    if (task.creatorId != user.sub) {
-      throw new ForbiddenException();
-    }
-    return this.tasksService.remove({ id: id, creatorId: user.sub });
+    return this.tasksService.remove(user.sub, id, { id: id, creatorId: user.sub });
   }
 }
